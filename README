@@ -1,0 +1,13 @@
+*************************************
+**   Fifteen puzzle project 2012   **
+*************************************
+
+Requirements:
+- cmake;
+- boost libs.
+
+For building run:
+
+> cmake .
+> make
+> ./15puzzle
