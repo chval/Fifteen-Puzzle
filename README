@@ -2,12 +2,31 @@
 **   Fifteen puzzle project 2012   **
 *************************************
 
-Requirements:
-- cmake;
-- boost libs.
+Currently only one algorithm IDA* is supported, but in future this list will be expanded
 
-For building run:
+More about IDA* you can read in this pdf:
+http://ijcai.org/Past%20Proceedings/IJCAI-93-VOL1/PDF/035.pdf
 
+IDA* is well optimized for puzzles with dimension less than 4x4,
+but if greater than calculations can take a lot of time. So this can be used as nice CPU workbench
+
+Source code is available for c++ and perl under BSD license
+
+C++ version is ~50x faster than perl, but requires compilation.
+Perl version already contains multi-threaded algorithm that uses all processor cores for calculations
+
+Get source code with simple command:
+> git clone git://github.com/chval/Fifteen-Puzzle.git
+
+Then
+> cd Fifteen-Puzzle
 > cmake .
 > make
 > ./15puzzle
+
+Requirements:
+- cmake;
+- boost libs;
+- perl (for running scripts).
+
+
