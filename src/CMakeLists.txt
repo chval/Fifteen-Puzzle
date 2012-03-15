@@ -1,0 +1,6 @@
+include_directories("${PROJECT_SOURCE_DIR}/include")
+add_library(Board SHARED Board.cpp)
+add_library(ConsoleLogger SHARED ConsoleLogger.cpp)
+add_library(IDA_Star SHARED IDA_Star.cpp)
+add_library(Logger SHARED Logger.cpp)
+add_library(Solver SHARED Solver.cpp)
