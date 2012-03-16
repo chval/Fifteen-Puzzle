@@ -42,54 +42,56 @@ my $customBoard;
 $| = 1;
 
 &GetOptions(
-	'w|width=i'			=> \$boardWidth,
-	'h|height=i'		=> \$boardHeight,
-	'm|multi'			=> \$multi,
-	'l|max-fork-level=i'=> \$maxForkLevel,
-	'help'				=> \$help,
-	's|save-solution'	=> \$saveSolution,
-	'n|no-solution'		=> \$noSolution,
-	'c|set-puzzle=s'	=> \$customBoard
+    'w|width=i'         => \$boardWidth,
+    'h|height=i'        => \$boardHeight,
+    'm|multi'           => \$multi,
+    'l|max-fork-level=i'=> \$maxForkLevel,
+    'help'              => \$help,
+    's|save-solution'   => \$saveSolution,
+    'n|no-solution'     => \$noSolution,
+    'c|set-puzzle=s'    => \$customBoard
 );
 
 if ( $help ) {
-	while ( <DATA> ) { print }
-	exit 0;
+    while ( <DATA> ) { print }
+    exit 0;
 }
 
 while ( <DATA> ) { print; last if $_ eq "\n" }
 
 my $board;
 unless ( $customBoard ) {
-	$board = &FifteenPuzzleCore::createBoard($boardWidth, $boardHeight);
-	print "=====> Randomly generated puzzle:\n\n" if $board;
+    $board = &FifteenPuzzleCore::createBoard($boardWidth, $boardHeight);
+    print "=====> Randomly generated puzzle:\n\n" if $board;
 } else {
-	$board = &FifteenPuzzleCore::board(eval $customBoard);
-	print "=====> Custom puzzle:\n\n" if $board;
+    $board = &FifteenPuzzleCore::board(eval $customBoard);
+    print "=====> Custom puzzle:\n\n" if $board;
 }
 &FifteenPuzzleCore::printBoard();
 
 if ( $noSolution ) {
-	exit 0;
+    exit 0;
 }
 
 if ( $board ) {
-	my $moves = 0;
-	my $timeStart = Time::HiRes::time();
-	if ( $multi && $Config{'useithreads'}) {
-		print "> Using multithreaded version\n";
-		$FifteenPuzzleCore::maxForkLevel = $maxForkLevel if $maxForkLevel;
-		print "> Max fork level = " . $FifteenPuzzleCore::maxForkLevel . "\n\n";
-		$moves = &FifteenPuzzleCore::multi_IDA_star();
-	} else {
-		print "> Using single-threaded version\n\n";
-		$moves = &FifteenPuzzleCore::IDA_star();
-	}
-	my $timeStop = Time::HiRes::time();
-	printf( "=====> %.8f sec\n", $timeStop - $timeStart );
-	print "moves : " . $moves . "\n";
-	if ( $moves && $saveSolution) {
-		&FifteenPuzzleCore::writeSolution('solution.txt');
+    my $moves = 0;
+    my $timeStart = Time::HiRes::time();
+    if ( $multi && $Config{'useithreads'}) {
+        print "> Using multithreaded version\n";
+        $FifteenPuzzleCore::maxForkLevel = $maxForkLevel if $maxForkLevel;
+        print "> Max fork level = " . $FifteenPuzzleCore::maxForkLevel . "\n\n";
+        $moves = &FifteenPuzzleCore::multi_IDA_star();
+    } else {
+        print "> Using single-threaded version\n\n";
+        $moves = &FifteenPuzzleCore::IDA_star();
+    }
+    my $timeStop = Time::HiRes::time();
+    printf( "=====> %.8f sec\n", $timeStop - $timeStart );
+    print "moves    : " . $moves . "\n";
+    if ( $moves && $saveSolution) {
+        &FifteenPuzzleCore::writeSolution('solution.txt');
+    } elsif ( $moves ) {
+		&FifteenPuzzleCore::printShuffles();
 	}
 }
 exit 0;

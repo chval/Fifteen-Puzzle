@@ -32,10 +32,10 @@ use warnings;
 use threads;
 use threads::shared;
 
-use constant INFINITY		=> 100500;
-use constant WIDTH			=> 3;
-use constant HEIGHT			=> 3;
-use constant MAX_FORK_LEVEL	=> 2;
+use constant INFINITY       => 100500;
+use constant WIDTH          => 3;
+use constant HEIGHT         => 3;
+use constant MAX_FORK_LEVEL => 2;
 
 # Internal variables
 my $_board;     # Current board
@@ -49,6 +49,7 @@ our $maxForkLevel = MAX_FORK_LEVEL;
 
 my $_movesCount :shared = INFINITY;
 my %_moves :shared = ();
+my @_shuffles :shared = ();
 
 ########################################
 # Purpose    : Compress board data
@@ -57,8 +58,8 @@ my %_moves :shared = ();
 # Parameters : Board reference
 #
 my $__packBoard = sub {
-	my $board = shift || $_board;
-	return join ':', map { join ',', @$_ } @$board;
+    my $board = shift || $_board;
+    return join ':', map { join ',', @$_ } @$board;
 };
 
 ########################################
@@ -68,9 +69,9 @@ my $__packBoard = sub {
 # Parameters : String like '1,2,3:4,5,6:7,8,9'
 #
 my $__unpackBoard = sub {
-	my $board = [split ':', shift];
-	for ( 0 .. $#$board ) { push @$board, [split ',', shift @$board] }
-	return $board;
+    my $board = [split ':', shift];
+    for ( 0 .. $#$board ) { push @$board, [split ',', shift @$board] }
+    return $board;
 };
 
 ########################################
@@ -81,8 +82,8 @@ my $__unpackBoard = sub {
 #            : Reference to 2-nd value
 #
 my $__swap = sub {
-	my ($a, $b) = @_;
-	my $s = $$a; $$a = $$b; $$b = $s;
+    my ($a, $b) = @_;
+    my $s = $$a; $$a = $$b; $$b = $s;
 };
 
 ########################################
@@ -92,12 +93,12 @@ my $__swap = sub {
 # Returns    : None
 #
 my $__create_bIndex = sub {
-	$_bIndex = [];
-	for (my $x = 0; $x < @{$_board}; $x++ ) {
-		for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
-			$_bIndex->[$_board->[$x][$y]] = [$x, $y];
-		}
-	}
+    $_bIndex = [];
+    for (my $x = 0; $x < @{$_board}; $x++ ) {
+        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+            $_bIndex->[$_board->[$x][$y]] = [$x, $y];
+        }
+    }
 };
 
 ########################################
@@ -107,18 +108,18 @@ my $__create_bIndex = sub {
 # Returns    : None
 #
 my $__create_bsIndex = sub {
-	$_bsIndex = [];
-	my $magick = 1;
-	for (my $x = 0; $x < @{$_board}; $x++ ) {
-		for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
-			my $magickValue = $y + $magick;
-			if ($x == $#{$_board} && $y == $#{$_board->[$x]}) {
-				$magickValue = 0;
-			}
-			$_bsIndex->[$magickValue] = [$x, $y];
-		}
-		$magick += @{$_board->[$x]};
-	}
+    $_bsIndex = [];
+    my $magick = 1;
+    for (my $x = 0; $x < @{$_board}; $x++ ) {
+        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+            my $magickValue = $y + $magick;
+            if ($x == $#{$_board} && $y == $#{$_board->[$x]}) {
+                $magickValue = 0;
+            }
+            $_bsIndex->[$magickValue] = [$x, $y];
+        }
+        $magick += @{$_board->[$x]};
+    }
 };
 
 ########################################
@@ -129,51 +130,50 @@ my $__create_bsIndex = sub {
 # Returns    : None
 #
 my $__create_hIndex = sub {
-	$_hIndex = [];
-	my $h = 0;
-	for (my $i = 0; $i < @{$_bIndex}; $i++ ) {
-		my ($dx, $dy) = @{$_bIndex->[$i]};
-		my ($x, $y) = @{$_bsIndex->[$i]};
-		my $h_ = abs($dx - $x) + abs($dy - $y);
-		$h += $h_;
-		$_hIndex->[$i] = $h_;
-	}
-	push @{$_hIndex}, $h;
+    $_hIndex = [];
+    my $h = 0;
+    for (my $i = 0; $i < @{$_bIndex}; $i++ ) {
+        my ($dx, $dy) = @{$_bIndex->[$i]};
+        my ($x, $y) = @{$_bsIndex->[$i]};
+        my $h_ = abs($dx - $x) + abs($dy - $y);
+        $h += $h_;
+        $_hIndex->[$i] = $h_;
+    }
+    push @{$_hIndex}, $h;
 };
 
 ########################################
-# Purpose    : Create index of neighbour tiles in a current board state
-#              Last element in index map is id of zero
+# Purpose    : Create index of neighbour cells in a current board state
 # Access     : Private
 # Usage      : After game board created
 # Returns    : None
 #
 my $__create_nIndex = sub {
-	$_nIndex = [];
-	for (my $x = 0; $x < @{$_board}; $x++ ) {
-		for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+    $_nIndex = [];
+    for (my $x = 0; $x < @{$_board}; $x++ ) {
+        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
 
-			# Horizontal left
-			if ( (my $dy = $y - 1) >= 0 ) {
-				push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$x][$dy];
-			}
+            # Horizontal left
+            if ( (my $dy = $y - 1) >= 0 ) {
+                push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$x][$dy];
+            }
 
-			# Vertical up
-			if ( (my $dx = $x - 1) >= 0 ) {
-				push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$dx][$y];
-			}
+            # Vertical up
+            if ( (my $dx = $x - 1) >= 0 ) {
+                push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$dx][$y];
+            }
 
-			# Horizontal right
-			if ( (my $dy = $y + 1) < @{$_board->[$x]} ) {
-				push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$x][$dy];
-			}
+            # Horizontal right
+            if ( (my $dy = $y + 1) < @{$_board->[$x]} ) {
+                push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$x][$dy];
+            }
 
-			# Vertical down
-			if ( (my $dx = $x + 1) < @{$_board} ) {
-				push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$dx][$y];
-			}
-		}
-	}
+            # Vertical down
+            if ( (my $dx = $x + 1) < @{$_board} ) {
+                push @{$_nIndex->[$_board->[$x][$y]]}, \$_board->[$dx][$y];
+            }
+        }
+    }
 };
 
 ########################################
@@ -182,16 +182,16 @@ my $__create_nIndex = sub {
 # Returns    : Checksum
 #
 my $__calcChecksum = sub {
-	my ($boardArray, $cs) = ([], 0);
-	map { map { push @$boardArray, $_ } @$_ } @$_board;
-	for (my $x = 0; $x < $#$boardArray; $x++) {
-		next unless $boardArray->[$x];
-		for (my $y = $x + 1; $y < @$boardArray; $y++) {
-			next unless $boardArray->[$y];
-			$cs++ if $boardArray->[$y] < $boardArray->[$x];
-		}
-	}
-	return $cs;
+    my ($boardArray, $cs) = ([], 0);
+    map { map { push @$boardArray, $_ } @$_ } @$_board;
+    for (my $x = 0; $x < $#$boardArray; $x++) {
+        next unless $boardArray->[$x];
+        for (my $y = $x + 1; $y < @$boardArray; $y++) {
+            next unless $boardArray->[$y];
+            $cs++ if $boardArray->[$y] < $boardArray->[$x];
+        }
+    }
+    return $cs;
 };
 
 ########################################
@@ -204,45 +204,45 @@ my $__calcChecksum = sub {
 #            : Height
 #
 my $__fixBoard = sub {
-	my ($cs, $w, $h) = @_;
+    my ($cs, $w, $h) = @_;
 
-	# Board size (width * height - 1)
-	my $size = $#$_bIndex;
+    # Board size (width * height - 1)
+    my $size = $#$_bIndex;
 
-	# Row index of zero
-	my $zx = $_bIndex->[0][0];
-	
-	# For boards like 2x2(3), 2x3(5), 3x2(5), ...
+    # Row index of zero
+    my $zx = $_bIndex->[0][0];
+    
+    # For boards like 2x2(3), 2x3(5), 3x2(5), ...
     # add row index of zero
     if ( $size & 1 ) {
-		$cs += $zx;
-	}
+        $cs += $zx;
+    }
 
-	unless ( $h & 1 ) {
-		unless ( $w & 1) {
+    unless ( $h & 1 ) {
+        unless ( $w & 1) {
 
-			# For boards like 2x2, 4x4, ...
-			# row index of zero numbered from 1
-			$cs += 1;
-		} else {
+            # For boards like 2x2, 4x4, ...
+            # row index of zero numbered from 1
+            $cs += 1;
+        } else {
 
-			# For boards like 3x2, 3x4, 5x2, ...
-			# add parity of zero row index
-			$cs += ($zx & 1);
-		}
-	}
+            # For boards like 3x2, 3x4, 5x2, ...
+            # add parity of zero row index
+            $cs += ($zx & 1);
+        }
+    }
 
     # If parity odd then should fix
     if( $cs & 1 ) {
-		my $ac = \$_bIndex->[$size - 1];
-		my $bc = \$_bIndex->[$size - 2];
-		my ($ax, $ay) = @{$$ac};
-		my ($bx, $by) = @{$$bc};
-		my $a = \$_board->[$ax][$ay];
-		my $b = \$_board->[$bx][$by];
-		$__swap->($a, $b);
-		$__swap->($ac, $bc);
-	}
+        my $ac = \$_bIndex->[$size - 1];
+        my $bc = \$_bIndex->[$size - 2];
+        my ($ax, $ay) = @{$$ac};
+        my ($bx, $by) = @{$$bc};
+        my $a = \$_board->[$ax][$ay];
+        my $b = \$_board->[$bx][$by];
+        $__swap->($a, $b);
+        $__swap->($ac, $bc);
+    }
 };
 
 ########################################
@@ -252,9 +252,9 @@ my $__fixBoard = sub {
 # Parameters : Board reference
 #
 sub printBoard {
-	my $board = shift || $_board;
-	map { map { printf "%4d", $_ } @$_; print "\n" } @$board;
-	print "\n";
+    my $board = shift || $_board;
+    map { map { printf "%4d", $_ } @$_; print "\n" } @$board;
+    print "\n";
 }
 
 ########################################
@@ -264,22 +264,32 @@ sub printBoard {
 # Parameters : Filename
 #
 sub writeSolution {
-	my $fname = shift;
-	$fname = $$ . '_' . $fname;
-	if ( open SLN, ">$fname" ) {
-		print SLN "### Initial state ###\n";
-		map { map { printf SLN "%4d", $_ } @$_; print SLN "\n" } @$_board;
-		foreach ( 1 .. $_movesCount ) {
-			next unless $_moves{$_};
-			my $board = $__unpackBoard->($_moves{$_});
-			print SLN "\n\n[" . $_ . "]\n\n";
-			map { map { printf SLN "%4d", $_ } @$_; print SLN "\n" } @$board;
-		}
-		close SLN;
-		print "See '$fname' for solution\n";
-	} else {
-		print "Sorry, but '$fname' can't be created\n";
-	}
+    my $fname = shift;
+    $fname = $$ . '_' . $fname;
+    if ( open SLN, ">$fname" ) {
+        print SLN "### Initial state ###\n";
+        map { map { printf SLN "%4d", $_ } @$_; print SLN "\n" } @$_board;
+        foreach ( 1 .. $_movesCount ) {
+            next unless $_moves{$_};
+            my $board = $__unpackBoard->($_moves{$_});
+            print SLN "\n\n[" . $_ . "]\n\n";
+            map { map { printf SLN "%4d", $_ } @$_; print SLN "\n" } @$board;
+        }
+        close SLN;
+        print "See '$fname' for solution\n";
+    } else {
+        print "Sorry, but '$fname' can't be created\n";
+    }
+}
+
+########################################
+# Purpose    : Print sequence of empty cell neighbours to shuffle with
+# Access     : Public
+# Usage      : After solution
+# Returns    : None
+#
+sub printShuffles {
+    print ("shuffles :\n" , (join ',', @_shuffles), "\n");
 }
 
 ########################################
@@ -288,38 +298,38 @@ sub writeSolution {
 # Returns    : Board reference
 #
 sub board {
-	my $b = shift;
-	if ( $b && ref $b eq 'ARRAY' ) {
-		my $height = @$b;
-		my $width = ref $b->[0] eq 'ARRAY' ? @{$b->[0]} : 0; 
-		unless ($width > 1 && $height > 1) {
-			print "Error, width and height must be greater than 1\n";
-			return;
-		}
-		foreach ( @$b ) {
-			unless ( ref $_ eq 'ARRAY') {
-				print "Error, bad input board format\n";
-				return;
-			}
-			my $w = @$_;
-			unless ($w == $width) {
-				print "Error, bad board width\n";
-				return;
-			}
-		}
-		$_board = $b;
-		$__create_bIndex->();
-		unless ( (grep { defined $_ } @$_bIndex) ==  @$_bIndex && @$_bIndex == ($width * $height) ) {
-			print "Error, bad input board data\n";
-			undef $_board;
-			return;
-		}
-		$__fixBoard->($__calcChecksum->(), $width, $height);
-		$__create_bsIndex->();
-		$__create_hIndex->();
-		$__create_nIndex->();
-	}
-	return $_board;
+    my $b = shift;
+    if ( $b && ref $b eq 'ARRAY' ) {
+        my $height = @$b;
+        my $width = ref $b->[0] eq 'ARRAY' ? @{$b->[0]} : 0; 
+        unless ($width > 1 && $height > 1) {
+            print "Error, width and height must be greater than 1\n";
+            return;
+        }
+        foreach ( @$b ) {
+            unless ( ref $_ eq 'ARRAY') {
+                print "Error, bad input board format\n";
+                return;
+            }
+            my $w = @$_;
+            unless ($w == $width) {
+                print "Error, bad board width\n";
+                return;
+            }
+        }
+        $_board = $b;
+        $__create_bIndex->();
+        unless ( (grep { defined $_ } @$_bIndex) ==  @$_bIndex && @$_bIndex == ($width * $height) ) {
+            print "Error, bad input board data\n";
+            undef $_board;
+            return;
+        }
+        $__fixBoard->($__calcChecksum->(), $width, $height);
+        $__create_bsIndex->();
+        $__create_hIndex->();
+        $__create_nIndex->();
+    }
+    return $_board;
 }
 
 ########################################
@@ -330,32 +340,32 @@ sub board {
 #            : Height
 #
 sub createBoard {
-	my ($width, $height) = @_;
-	$width  ||= WIDTH;
-	$height ||= HEIGHT;
-	unless ($width > 1 && $height > 1) {
-		print "Error, width and height must be greater than 1\n";
-		return;
-	}
-	my $size = $height * $width - 1;
-	my $rand = [];
-	for ( 0 .. $size ) { push @$rand, $_ };
-	$_board  = [];
-	for ( my $x = 0; $x < $height; $x++ ) {
-		push @{$_board}, [];
-		for ( my $y = 0; $y < $width; $y++ ) {
-			my $rid = int(rand @$rand);
-			push @{$_board->[$x]}, $rand->[$rid];
-			$rand->[$rid] = $rand->[$#$rand];
-			pop @$rand;
-		}
-	}
-	$__create_bIndex->();
+    my ($width, $height) = @_;
+    $width  ||= WIDTH;
+    $height ||= HEIGHT;
+    unless ($width > 1 && $height > 1) {
+        print "Error, width and height must be greater than 1\n";
+        return;
+    }
+    my $size = $height * $width - 1;
+    my $rand = [];
+    for ( 0 .. $size ) { push @$rand, $_ };
+    $_board  = [];
+    for ( my $x = 0; $x < $height; $x++ ) {
+        push @{$_board}, [];
+        for ( my $y = 0; $y < $width; $y++ ) {
+            my $rid = int(rand @$rand);
+            push @{$_board->[$x]}, $rand->[$rid];
+            $rand->[$rid] = $rand->[$#$rand];
+            pop @$rand;
+        }
+    }
+    $__create_bIndex->();
     $__fixBoard->($__calcChecksum->(), $width, $height);
     $__create_bsIndex->();
-	$__create_hIndex->();
-	$__create_nIndex->();
-	return $_board;
+    $__create_hIndex->();
+    $__create_nIndex->();
+    return $_board;
 }
 
 ########################################
@@ -364,18 +374,18 @@ sub createBoard {
 # cost-bounds
 #
 sub multi_IDA_star {
-	my $F = $_hIndex->[-1];
-	$_movesCount = 0 unless $F;
-	print "F => $F ";
-	while ( $F ) {
-		$F = &multi_DFS($F, 1, 0);
-		print "$F ";
-	}
-	print "\n";
-	foreach ( threads->list() ) {
-		$_->detach();
-	}
-	return $_movesCount;
+    my $F = $_hIndex->[-1];
+    $_movesCount = 0 unless $F;
+    print "F => $F ";
+    while ( $F ) {
+        $F = &multi_DFS($F, 1, 0);
+        print "$F ";
+    }
+    print "\n";
+    foreach ( threads->list() ) {
+        $_->detach();
+    }
+    return $_movesCount;
 }
 
 ########################################
@@ -383,88 +393,99 @@ sub multi_IDA_star {
 # Parameters : Total cost
 #            : Current cost
 #            : Previous tile
+#            : Address of variable with boolean value (unique in each iteration, shows if current solution is the best)
 #
 sub multi_DFS {
-	my ($F, $G, $prev, $isBest) = @_;
-	my ($zx, $zy) = @{$_bIndex->[0]};
-	my ($threads, $minimals) = ([], []);
-	my @bestFlags = ();
-	my @nbrs = ();
-	map { push @nbrs, $$_ } @{$_nIndex->[0]};
-	foreach my $nbr ( @nbrs ) {
-		next if $nbr == $prev;
-		my ($nx, $ny) = @{$_bIndex->[$nbr]};
-		my ($ba, $bb) = (\$_board->[$zx][$zy], \$_board->[$nx][$ny]);
-		my ($bia, $bib) = (\$_bIndex->[$$ba], \$_bIndex->[$$bb]);
-		my ($nia, $nib) = (\$_nIndex->[0], \$_nIndex->[$nbr]);
-		my ($bav, $biav, $niav) = ($$ba, $$bia, $$nia);
-		($$ba, $$bb, $$bia, $$bib, $$nia, $$nib) = ($$bb, $bav, $$bib, $biav, $$nib, $niav);
-		my ($ha, $hb, $hs) = ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]);
-		my ($xa, $ya, $xb, $yb) = (@{$_bsIndex->[$$ba]}, @{$_bsIndex->[$$bb]});
-		$_hIndex->[$$ba] = abs($zx - $xa) + abs($zy - $ya);
-		$_hIndex->[$$bb] = abs($nx - $xb) + abs($ny - $yb);
-		$_hIndex->[-1] += $_hIndex->[$$ba] + $_hIndex->[$$bb] - $ha - $hb;
+    my ($F, $G, $prev, $isBest) = @_;
+    my ($zx, $zy) = @{$_bIndex->[0]};
+    my ($threads, $minimals) = ([], []);
+    my @bestFlags = ();
+    my $shuffleWith;
+    my @nbrs = ();
+    map { push @nbrs, $$_ } @{$_nIndex->[0]};
+    foreach my $nbr ( @nbrs ) {
+        next if $nbr == $prev;
+        my ($nx, $ny) = @{$_bIndex->[$nbr]};
+        my ($ba, $bb) = (\$_board->[$zx][$zy], \$_board->[$nx][$ny]);
+        my ($bia, $bib) = (\$_bIndex->[$$ba], \$_bIndex->[$$bb]);
+        my ($nia, $nib) = (\$_nIndex->[0], \$_nIndex->[$nbr]);
+        my ($bav, $biav, $niav) = ($$ba, $$bia, $$nia);
+        ($$ba, $$bb, $$bia, $$bib, $$nia, $$nib) = ($$bb, $bav, $$bib, $biav, $$nib, $niav);
+        my ($ha, $hb, $hs) = ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]);
+        my ($xa, $ya, $xb, $yb) = (@{$_bsIndex->[$$ba]}, @{$_bsIndex->[$$bb]});
+        $_hIndex->[$$ba] = abs($zx - $xa) + abs($zy - $ya);
+        $_hIndex->[$$bb] = abs($nx - $xb) + abs($ny - $yb);
+        $_hIndex->[-1] += $_hIndex->[$$ba] + $_hIndex->[$$bb] - $ha - $hb;
 
-		my $H = $_hIndex->[-1];
-		my $f = $G + $H;
-		if ( $f > $F ) {
-			($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-			($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-			return $f;
-		}
-		unless ( $H ) {
-			lock($_movesCount);
-			my $reset;
-			if ( $G < $_movesCount ) {
+        my $H = $_hIndex->[-1];
+        my $f = $G + $H;
+        if ( $f > $F ) {
+            ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+            ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            return $f;
+        }
+        unless ( $H ) {
+            lock($_movesCount);
+            my $reset;
+            if ( $G < $_movesCount ) {
 				lock(%_moves);
-				$_movesCount = $G;
-				%_moves = ();
-				$_moves{$G} = $__packBoard->();
-				$reset = 1;
-				if ( $isBest ) {
-					$$isBest = 1;
-				}
-			}
-			($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-			($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-			if ( $reset ) {
-				lock(%_moves);
-				$_moves{$G - 1} = $__packBoard->();
-			}
-			return $H;
+				lock(@_shuffles);
+                $_movesCount = $G;
+                %_moves = ();
+                @_shuffles = ();
+                $_moves{$G} = $__packBoard->();
+                unshift @_shuffles, $nbr;
+                $reset = 1;
+                if ( $isBest ) {
+                    $$isBest = 1;
+                }
+            }
+            ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+            ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            if ( $reset ) {
+                lock(%_moves);
+                $_moves{$G - 1} = $__packBoard->();
+            }
+            return $H;
+        }
+        if ( $G > $maxForkLevel ) {
+            my $flag = 0;
+            push @bestFlags, \$flag;
+            push @$minimals, &multi_DFS($F, $G + 1, $nbr, \$flag);
+        } else {
+            my $flag :shared = 0;
+            push @bestFlags, \$flag;
+            push @$threads, threads->create(\&multi_DFS, $F, $G + 1, $nbr, \$flag);
+        }
+        ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+        ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+    }
+    my $min = INFINITY;
+    foreach ( @$threads ) {
+        push @$minimals, $_->join();
+    }
+    foreach ( @$minimals ) {
+        $min = $_ if $_ < $min;
+    }
+    my @shfls = ();
+    foreach ( @nbrs ) {
+		push @shfls, $_ if $_ != $prev;
+	}
+    for (my $i = 0; $i < @bestFlags; $i++) {
+        if ( ${$bestFlags[$i]} ) {
+			$shuffleWith = $shfls[$i];
 		}
-		if ( $G > $maxForkLevel ) {
-			my $flag = 0;
-			push @bestFlags, \$flag;
-			push @$minimals, &multi_DFS($F, $G + 1, $nbr, \$flag);
-		} else {
-			my $flag :shared = 0;
-			push @bestFlags, \$flag;
-			push @$threads, threads->create(\&multi_DFS, $F, $G + 1, $nbr, \$flag);
-		}
-		($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-		($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-	}
-	my $min = INFINITY;
-	foreach ( @$threads ) {
-		push @$minimals, $_->join();
-	}
-	foreach ( @$minimals ) {
-		$min = $_ if $_ < $min;
-	}
-	my $bestFlag = 0;
-	foreach ( @bestFlags ) {
-		$bestFlag = 1 if $$_;
-	}
-	if ( !$min && $bestFlag ) {
-		lock($_movesCount);
+    }
+    if ( !$min && $shuffleWith ) {
 		lock(%_moves);
-		$_moves{$G - 1} = $__packBoard->();
-	}
-	if ( $isBest && $bestFlag ) {
-		$$isBest = 1;
-	}
-	return $min;
+		lock(@_shuffles);
+        $_moves{$G - 1} = $__packBoard->();
+        unshift @_shuffles, $shuffleWith;
+    }
+    if ( $isBest && $shuffleWith ) {
+        $$isBest = 1;
+    }
+    return $min;
 }
 
 ########################################
@@ -473,15 +494,15 @@ sub multi_DFS {
 # cost-bounds
 #
 sub IDA_star {
-	my $F = $_hIndex->[-1];
-	$_movesCount = 0 unless $F;
-	print "F => $F ";
-	while ( $F ) {
-		$F = &DFS($F, 1, 0);
-		print "$F ";
-	}
-	print "\n";
-	return $_movesCount;
+    my $F = $_hIndex->[-1];
+    $_movesCount = 0 unless $F;
+    print "F => $F ";
+    while ( $F ) {
+        $F = &DFS($F, 1, 0);
+        print "$F ";
+    }
+    print "\n";
+    return $_movesCount;
 }
 
 ########################################
@@ -489,57 +510,72 @@ sub IDA_star {
 # Parameters : Total cost
 #            : Current cost
 #            : Previous tile
+#            : Address of variable with boolean value (unique in each iteration, shows if current solution is the best)
 #
 sub DFS {
-	my ($F, $G, $prev) = @_;
-	my ($zx, $zy) = @{$_bIndex->[0]};
-	my $min = INFINITY;
-	my @nbrs = ();
-	map { push @nbrs, $$_ } @{$_nIndex->[0]};
-	foreach my $nbr ( @nbrs ) {
-		next if $nbr == $prev;
-		my ($nx, $ny) = @{$_bIndex->[$nbr]};
-		my ($ba, $bb) = (\$_board->[$zx][$zy], \$_board->[$nx][$ny]);
-		my ($bia, $bib) = (\$_bIndex->[$$ba], \$_bIndex->[$$bb]);
-		my ($nia, $nib) = (\$_nIndex->[0], \$_nIndex->[$nbr]);
-		my ($bav, $biav, $niav) = ($$ba, $$bia, $$nia);
-		($$ba, $$bb, $$bia, $$bib, $$nia, $$nib) = ($$bb, $bav, $$bib, $biav, $$nib, $niav);
-		my ($ha, $hb, $hs) = ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]);
-		my ($xa, $ya, $xb, $yb) = (@{$_bsIndex->[$$ba]}, @{$_bsIndex->[$$bb]});
-		$_hIndex->[$$ba] = abs($zx - $xa) + abs($zy - $ya);
-		$_hIndex->[$$bb] = abs($nx - $xb) + abs($ny - $yb);
-		$_hIndex->[-1] += $_hIndex->[$$ba] + $_hIndex->[$$bb] - $ha - $hb;
+    my ($F, $G, $prev, $isBest) = @_;
+    my ($zx, $zy) = @{$_bIndex->[0]};
+    my $min = INFINITY;
+    my $shuffleWith;
+    my @nbrs = ();
+    map { push @nbrs, $$_ } @{$_nIndex->[0]};
+    foreach my $nbr ( @nbrs ) {
+        next if $nbr == $prev;
+        my ($nx, $ny) = @{$_bIndex->[$nbr]};
+        my ($ba, $bb) = (\$_board->[$zx][$zy], \$_board->[$nx][$ny]);
+        my ($bia, $bib) = (\$_bIndex->[$$ba], \$_bIndex->[$$bb]);
+        my ($nia, $nib) = (\$_nIndex->[0], \$_nIndex->[$nbr]);
+        my ($bav, $biav, $niav) = ($$ba, $$bia, $$nia);
+        ($$ba, $$bb, $$bia, $$bib, $$nia, $$nib) = ($$bb, $bav, $$bib, $biav, $$nib, $niav);
+        my ($ha, $hb, $hs) = ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]);
+        my ($xa, $ya, $xb, $yb) = (@{$_bsIndex->[$$ba]}, @{$_bsIndex->[$$bb]});
+        $_hIndex->[$$ba] = abs($zx - $xa) + abs($zy - $ya);
+        $_hIndex->[$$bb] = abs($nx - $xb) + abs($ny - $yb);
+        $_hIndex->[-1] += $_hIndex->[$$ba] + $_hIndex->[$$bb] - $ha - $hb;
 
-		my $H = $_hIndex->[-1];
-		my $f = $G + $H;
-		if ( $f > $F ) {
-			($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-			($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-			return $f;
+        my $H = $_hIndex->[-1];
+        my $f = $G + $H;
+        if ( $f > $F ) {
+            ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+            ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            return $f;
+        }
+        unless ( $H ) {
+            if ( $G < $_movesCount ) {
+                $_movesCount = $G;
+                %_moves = ();
+                @_shuffles = ();
+                $_moves{$G} = $__packBoard->();
+                unshift @_shuffles, $nbr;
+                if ( $isBest ) {
+                    $$isBest = 1;
+                }
+            }
+            my $goalBoard = $__packBoard->();
+            ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+            ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            if ( (scalar keys %_moves) == 1 ) {
+                $_moves{$G - 1} = $__packBoard->();
+            }
+            return $H;
+        }
+        my $best = 0;
+        my $m = &DFS($F, $G + 1, $nbr, \$best);
+        if ( $m < $min ) {
+			$min = $m;
 		}
-		unless ( $H ) {
-			if ( $G < $_movesCount ) {
-				$_movesCount = $G;
-				%_moves = ();
-				$_moves{$G} = $__packBoard->();
-			}
-			my $goalBoard = $__packBoard->();
-			($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-			($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-			if ( (scalar keys %_moves) == 1 ) {
-				$_moves{$G - 1} = $__packBoard->();
-			}
-			return $H;
+		if ( $best ) {
+			$shuffleWith = $nbr;
 		}
-		my $m = &DFS($F, $G + 1, $nbr);
-		$min = $m if $m < $min;
-		($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
-		($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-	}
-	unless ( $min ) {
-		if ( $G == $_movesCount - (scalar keys %_moves) + 1 ) {
-			$_moves{$G - 1} = $__packBoard->();
-		}
-	}
-	return $min;
+        ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
+        ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+    }
+    if ( !$min && $shuffleWith ) {
+        $_moves{$G - 1} = $__packBoard->();
+        unshift @_shuffles, $shuffleWith;
+    }
+    if ( $isBest && $shuffleWith ) {
+        $$isBest = 1;
+    }
+    return $min;
 }
