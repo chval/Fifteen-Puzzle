@@ -29,13 +29,16 @@
  * F = total cost
  * G = current cost
  *
+ * isBest - Address of variable with boolean value
+ *     (unique in each iteration, shows if current solution is the best)
+ *
  * Return minimal found cost
  *
  */
-inline int IDA_Star::__DFS(int F, int G, int prev)
+inline int IDA_Star::__DFS(int F, int G, int prev, int *isBest)
 {
     int min = std::numeric_limits<int>::max();
-    int shuffleWith;
+    int shuffleWith = 0;
     int nbrs[NEIGHBOURS_CNT_MAX];
     int cnt = _board.getNeigbours(0, nbrs);
     for ( int i = 0; i < cnt; i++ )
@@ -72,6 +75,10 @@ inline int IDA_Star::__DFS(int F, int G, int prev)
                 // save board in a goal state
                 _slnStates[G] = _board.toString();
                 _slnShuffles.push_back(nbr);
+                if ( isBest )
+                {
+                    *isBest = 1;
+                }
             }
 
             __stepBack(nbr, hn, hz, hs);
@@ -86,11 +93,16 @@ inline int IDA_Star::__DFS(int F, int G, int prev)
             return H;
         }
 
+        int best = 0;
+
         // recursive call
-        int m = __DFS(F, G + 1, nbr);
+        int m = __DFS(F, G + 1, nbr, &best);
         if ( m < min )
         {
             min = m;
+        }
+        if ( best )
+        {
             shuffleWith = nbr;
         }
 
@@ -98,14 +110,14 @@ inline int IDA_Star::__DFS(int F, int G, int prev)
     }
 
     // save current board state if best solution was found
-    if ( ! min )
+    if ( ! min && shuffleWith )
     {
-        int ms = _slnStates.size();
-        if ( G == _slnStepsCnt - ms + 1 )
-        {
-            _slnStates[G - 1] = _board.toString();
-            _slnShuffles.push_back(shuffleWith);
-        }
+        _slnStates[G - 1] = _board.toString();
+        _slnShuffles.push_back(shuffleWith);
+    }
+    if ( isBest && shuffleWith )
+    {
+        *isBest = 1;
     }
     return min;
 }

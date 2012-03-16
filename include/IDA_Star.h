@@ -39,7 +39,8 @@ private:
     int _slnFoundCnt;                   // count of found solutions
     int __DFS(int F,
               int G,
-              int prev);                // Depth-first search with cost limits
+              int prev,
+              int *isBest);             // Depth-first search with cost limits
 };
 
 #include "IDA_Star.hpp"

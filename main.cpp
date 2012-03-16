@@ -49,6 +49,7 @@ void run()
     board->print();
     Solver *solver = new IDA_Star(*board);
     solver->solve();
+    solver->dumpSolutionShuffles();
     delete solver;
 }
 

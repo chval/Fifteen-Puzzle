@@ -59,7 +59,7 @@ int IDA_Star::solve()
     Logger::getInstance() << "F => " << F << " ";
     while ( F )
     {
-        F = __DFS(F, 1, 0);
+        F = __DFS(F, 1, 0, NULL);
         Logger::getInstance() << F << " ";
     }
 
