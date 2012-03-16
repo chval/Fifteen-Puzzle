@@ -428,8 +428,8 @@ sub multi_DFS {
             lock($_movesCount);
             my $reset;
             if ( $G < $_movesCount ) {
-				lock(%_moves);
-				lock(@_shuffles);
+                lock(%_moves);
+                lock(@_shuffles);
                 $_movesCount = $G;
                 %_moves = ();
                 @_shuffles = ();
@@ -469,16 +469,16 @@ sub multi_DFS {
     }
     my @shfls = ();
     foreach ( @nbrs ) {
-		push @shfls, $_ if $_ != $prev;
-	}
+        push @shfls, $_ if $_ != $prev;
+    }
     for (my $i = 0; $i < @bestFlags; $i++) {
         if ( ${$bestFlags[$i]} ) {
-			$shuffleWith = $shfls[$i];
-		}
+            $shuffleWith = $shfls[$i];
+        }
     }
     if ( !$min && $shuffleWith ) {
-		lock(%_moves);
-		lock(@_shuffles);
+        lock(%_moves);
+        lock(@_shuffles);
         $_moves{$G - 1} = $__packBoard->();
         unshift @_shuffles, $shuffleWith;
     }
@@ -562,11 +562,11 @@ sub DFS {
         my $best = 0;
         my $m = &DFS($F, $G + 1, $nbr, \$best);
         if ( $m < $min ) {
-			$min = $m;
-		}
-		if ( $best ) {
-			$shuffleWith = $nbr;
-		}
+            $min = $m;
+        }
+        if ( $best ) {
+            $shuffleWith = $nbr;
+        }
         ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
         ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
     }

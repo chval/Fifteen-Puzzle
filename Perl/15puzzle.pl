@@ -91,8 +91,8 @@ if ( $board ) {
     if ( $moves && $saveSolution) {
         &FifteenPuzzleCore::writeSolution('solution.txt');
     } elsif ( $moves ) {
-		&FifteenPuzzleCore::printShuffles();
-	}
+        &FifteenPuzzleCore::printShuffles();
+    }
 }
 exit 0;
 
