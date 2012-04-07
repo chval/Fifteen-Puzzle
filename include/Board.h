@@ -52,6 +52,7 @@ public:
     Board(int width,
           int height);
     Board(std::string json);
+    Board(const Board &board);
     int getWidth();
     int getHeight();
     int getSize();

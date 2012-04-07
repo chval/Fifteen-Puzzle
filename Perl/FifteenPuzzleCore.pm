@@ -403,6 +403,8 @@ sub multi_DFS {
     my $shuffleWith;
     my @nbrs = ();
     map { push @nbrs, $$_ } @{$_nIndex->[0]};
+    my $min = INFINITY;
+    my $stepsCnt = INFINITY;
     foreach my $nbr ( @nbrs ) {
         next if $nbr == $prev;
         my ($nx, $ny) = @{$_bIndex->[$nbr]};
@@ -422,7 +424,8 @@ sub multi_DFS {
         if ( $f > $F ) {
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
             ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-            return $f;
+            $min = $f;
+            last;
         }
         unless ( $H ) {
             lock($_movesCount);
@@ -437,7 +440,7 @@ sub multi_DFS {
                 unshift @_shuffles, $nbr;
                 $reset = 1;
                 if ( $isBest ) {
-                    $$isBest = 1;
+                    $$isBest = $G;
                 }
             }
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
@@ -460,7 +463,6 @@ sub multi_DFS {
         ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
         ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
     }
-    my $min = INFINITY;
     foreach ( @$threads ) {
         push @$minimals, $_->join();
     }
@@ -472,8 +474,12 @@ sub multi_DFS {
         push @shfls, $_ if $_ != $prev;
     }
     for (my $i = 0; $i < @bestFlags; $i++) {
-        if ( ${$bestFlags[$i]} ) {
-            $shuffleWith = $shfls[$i];
+        if ( ${$bestFlags[$i]} < $stepsCnt ) {
+            lock($_movesCount);
+            if ( ${$bestFlags[$i]} == $_movesCount ) {
+                $stepsCnt = ${$bestFlags[$i]};
+                $shuffleWith = $shfls[$i];
+            }
         }
     }
     if ( !$min && $shuffleWith ) {
@@ -483,7 +489,7 @@ sub multi_DFS {
         unshift @_shuffles, $shuffleWith;
     }
     if ( $isBest && $shuffleWith ) {
-        $$isBest = 1;
+        $$isBest = $stepsCnt;
     }
     return $min;
 }
@@ -538,6 +544,7 @@ sub DFS {
         if ( $f > $F ) {
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
             ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            last if $shuffleWith;
             return $f;
         }
         unless ( $H ) {

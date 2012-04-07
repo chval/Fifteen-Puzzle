@@ -100,7 +100,7 @@ __DATA__
 *************************
 ** Fifteen puzzle game **
 *************************
-Version 1.3
+Version 1.4
 Author <blackchval@gmail.com> 2011, 2012
 Using: IDA*, DFS, Manhattan distance
 
@@ -109,8 +109,8 @@ Usage: puzzle.pl [options] ...
  --help                           show this help message
  -w N, --width=N                  random puzzle width (default is 3)
  -h N, --height=N                 random puzzle height (default is 3)
- --multi                          use multithreaded version of algotithm
- -l N, --max-fork-level=N         used in multithreaded algotithm (default is 2)
+ --multi                          use multi-threaded version of algotithm
+ -l N, --max-fork-level=N         used in multi-threaded algorithm (default is 2)
                                   Recommended value is number of processor cores
  -s, --save-solution              save solution into file
  -n, --no-solution                just create and print random puzzle
