@@ -35,8 +35,6 @@ inline void Solver::__init()
         __fix();
         __bsIndex();
         __hIndex();
-        _slnStepsCnt = std::numeric_limits<int>::max();
-        _madeStepsCnt = 0;
     }
 }
 
@@ -57,9 +55,6 @@ inline void Solver::__destroy()
 
         // cleanup heuristic index
         delete [] _hIndex;
-
-        _slnStates.clear();
-        _slnShuffles.clear();
     }
 }
 

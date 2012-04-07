@@ -90,6 +90,53 @@ Board::Board(std::string json)
 }
 
 /**
+ * Board copy constructor
+ *
+ * Duplicate board internal data
+ *
+ */
+Board::Board(const Board &board)
+{
+    *this = board;
+
+    // copy board
+    _board = new int *[board._height];
+    for ( int x = 0; x < board._height; x++ )
+    {
+        _board[x] = new int[board._width];
+        for ( int y = 0; y < board._width; y++ )
+            _board[x][y] = board._board[x][y];
+    }
+
+    // copy bIndex
+    _bIndex = new int *[board._size];
+    for ( int x = 0; x < board._size; x++ )
+    {
+        _bIndex[x] = new int[2];
+        _bIndex[x][0] = board._bIndex[x][0];
+        _bIndex[x][1] = board._bIndex[x][1];
+    }
+
+    // copy nIndex
+    _nIndex = new int **[board._size];
+    for ( int x = 0; x < board._size; x++ )
+    {
+        _nIndex[x] = new int *[NEIGHBOURS_CNT_MAX];
+        for ( int n = 0; n < NEIGHBOURS_CNT_MAX; n++ )
+        {
+            if ( board._nIndex[x][n] )
+            {
+                _nIndex[x][n] = &_board[_bIndex[*board._nIndex[x][n]][0]][_bIndex[*board._nIndex[x][n]][1]];
+            }
+            else
+            {
+                _nIndex[x][n] = 0;
+            }
+        }
+    }
+}
+
+/**
  * Board::getWidth
  *
  * Return board width

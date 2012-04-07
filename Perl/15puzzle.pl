@@ -21,7 +21,6 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 use strict;
 use warnings;
@@ -76,7 +75,8 @@ if ( $noSolution ) {
 if ( $board ) {
     my $moves = 0;
     my $timeStart = Time::HiRes::time();
-    if ( $multi && $Config{'useithreads'}) {
+
+    if ( $multi && $Config{'useithreads'} ) {
         print "> Using multithreaded version\n";
         $FifteenPuzzleCore::maxForkLevel = $maxForkLevel if $maxForkLevel;
         print "> Max fork level = " . $FifteenPuzzleCore::maxForkLevel . "\n\n";
@@ -85,10 +85,12 @@ if ( $board ) {
         print "> Using single-threaded version\n\n";
         $moves = &FifteenPuzzleCore::IDA_star();
     }
+
     my $timeStop = Time::HiRes::time();
     printf( "=====> %.8f sec\n", $timeStop - $timeStart );
     print "moves    : " . $moves . "\n";
-    if ( $moves && $saveSolution) {
+
+    if ( $moves && $saveSolution ) {
         &FifteenPuzzleCore::writeSolution('solution.txt');
     } elsif ( $moves ) {
         &FifteenPuzzleCore::printShuffles();
@@ -97,10 +99,10 @@ if ( $board ) {
 exit 0;
 
 __DATA__
-*************************
-** Fifteen puzzle game **
-*************************
-Version 1.3
+*******************************
+**   Fifteen puzzle solver   **
+*******************************
+Version 1.4
 Author <blackchval@gmail.com> 2011, 2012
 Using: IDA*, DFS, Manhattan distance
 
@@ -109,8 +111,8 @@ Usage: puzzle.pl [options] ...
  --help                           show this help message
  -w N, --width=N                  random puzzle width (default is 3)
  -h N, --height=N                 random puzzle height (default is 3)
- --multi                          use multithreaded version of algotithm
- -l N, --max-fork-level=N         used in multithreaded algotithm (default is 2)
+ --multi                          use multi-threaded version of algotithm
+ -l N, --max-fork-level=N         used in multi-threaded algorithm (default is 2)
                                   Recommended value is number of processor cores
  -s, --save-solution              save solution into file
  -n, --no-solution                just create and print random puzzle

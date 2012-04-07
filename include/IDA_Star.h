@@ -26,21 +26,27 @@
 #define IDA_STAR_H
 
 #include "Solver.h"
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
 
 class IDA_Star : public Solver
 {
 public:
-    IDA_Star(Board &board) : Solver(board)
-    {
-        _slnFoundCnt = 0;
-    }
+    IDA_Star(Board &board, int cpuUnits = 0);
+    IDA_Star(const Solver &solver);
     int solve();
 private:
-    int _slnFoundCnt;                   // count of found solutions
+    static int _slnFoundCnt;            // count of found solutions
+    static boost::mutex _sln_mutex;
     int __DFS(int F,
               int G,
               int prev,
               int *isBest);             // Depth-first search with cost limits
+    void __DFS_Multi(int F,
+                     int G,
+                     int prev,
+                     int *min,
+                     int *isBest);      // Multi-threaded version
 };
 
 #include "IDA_Star.hpp"

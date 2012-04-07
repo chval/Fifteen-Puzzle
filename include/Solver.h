@@ -27,6 +27,7 @@
 
 #include "Board.h"
 #include <sys/time.h>
+#include <boost/thread/mutex.hpp>
 
 /**
  * Abstract Solver
@@ -35,43 +36,46 @@
 class Solver
 {
 public:
-    Solver(Board &b);
+    Solver(Board &b, int cpuUnits = 0);
+    Solver(const Solver &solver);
     void dumpSolutionStates();
     void dumpSolutionShuffles();
     virtual int solve() = 0;
     virtual ~Solver();
 private:
-    void __init();                          // init internal data
-    void __destroy();                       // destroy internal data
-    void __bsIndex();                       // build board sample(goal) Index
-    void __hIndex();                        // build heuristic Index
-    int __checksum();                       // calculate checksum
-    void __fix();                           // fix board if incorrect checksum
+    void __init();                                 // init internal data
+    void __destroy();                              // destroy internal data
+    void __bsIndex();                              // build board sample(goal) Index
+    void __hIndex();                               // build heuristic Index
+    int __checksum();                              // calculate checksum
+    void __fix();                                  // fix board if incorrect checksum
 
     struct timeval _tv_start;
     struct timeval _tv_stop;
     double _solution_time;
 protected:
-    Board _board;                           // Board object
-    int _slnStepsCnt;                       // count of steps in solution
-    double _madeStepsCnt;                   // count of steps made while searching solution
-    std::map<int, std::string> _slnStates;  // solution steps ( step => board state )
-    std::vector<int> _slnShuffles;          // solution shuffles (sequence of empty cell neighbours to shuffle with)
-    int **_bsIndex;                         // board sample(goal) Index
-    int  *_hIndex;                          // heuristic Index
+    Board _board;                                  // Board object
+    static int _slnStepsCnt;                       // count of steps in solution
+    double _madeStepsCnt;                          // count of steps made while searching solution
+    static std::map<int, std::string> _slnStates;  // solution steps ( step => board state )
+    static std::vector<int> _slnShuffles;          // solution shuffles (sequence of empty cell neighbours to shuffle with)
+    static int _cpu_units;                         // number of processor units (used in multi-threaded version)
+    int **_bsIndex;                                // board sample(goal) Index
+    int  *_hIndex;                                 // heuristic Index
+    char _algName[64];                             // simple name of algorithm
 
     int __stepForward(int nbr,
                       int &hNbr,
                       int &hZero,
-                      int &hSum);           // swap empty cell with it's neighbour
+                      int &hSum);                  // swap empty cell with it's neighbour
     void __stepBack(int nbr,
                     int hNbr,
                     int hZero,
-                    int hSum);              // rollback swap changes
+                    int hSum);                     // rollback swap changes
 
-    void __mStart();                        // method start (pinpoint the start time)
-    void __mStop();                         // method stop (pinpoint the time of termination)
-    double __getSlnUsec();                  // get solution time in milliseconds
+    void __mStart();                               // method start (pinpoint the start time)
+    void __mStop();                                // method stop (pinpoint the time of termination)
+    double __getSlnUsec();                         // get solution time in milliseconds
 };
 
 #include "Solver.hpp"

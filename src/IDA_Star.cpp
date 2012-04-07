@@ -24,6 +24,41 @@
 
 #include "IDA_Star.h"
 #include <stdio.h>
+#include <string.h>
+
+// declaration of static variables (should be seen from all threads)
+int IDA_Star::_slnFoundCnt = 0;
+boost::mutex IDA_Star::_sln_mutex;
+
+/**
+ * IDA_Star constructor
+ *
+ * Base class Solver initialized with board
+ *
+ */
+IDA_Star::IDA_Star(Board &board, int cpuUnits) : Solver(board, cpuUnits)
+{
+    // Initialized in a base class
+    if ( cpuUnits > 1 )
+    {
+        strcpy(_algName, "IDA* multi-threaded");
+    }
+    else
+    {
+        strcpy(_algName, "IDA*");
+    }
+}
+
+/**
+ * IDA_Star copy constructor
+ *
+ * Duplicate solver internal data
+ *
+ */
+IDA_Star::IDA_Star(const Solver &solver) : Solver(solver)
+{
+    // Copied in a base class
+}
 
 /**
  * IDA_Star::solve
@@ -40,11 +75,10 @@ int IDA_Star::solve()
     {
         return 0;
     }
-    _slnStepsCnt = std::numeric_limits<int>::max();
-    _madeStepsCnt = 0;
-    _slnFoundCnt = 0;
+    Solver::_slnStepsCnt = std::numeric_limits<int>::max();
+    IDA_Star::_slnFoundCnt = 0;
 
-    Logger::getInstance().append("IDA* started, ").timestamp();
+    Logger::getInstance().append(_algName).append(" started, ").timestamp();
 
     __mStart();
 
@@ -54,28 +88,36 @@ int IDA_Star::solve()
     {
 
         // already in a goal state
-        _slnStepsCnt = 0;
+        Solver::_slnStepsCnt = 0;
     }
     Logger::getInstance() << "F => " << F << " ";
+
     while ( F )
     {
-        F = __DFS(F, 1, 0, NULL);
+        if ( Solver::_cpu_units > 1 )
+        {
+            __DFS_Multi(F, 1, 0, &F, NULL);
+        }
+        else
+        {
+            F = __DFS(F, 1, 0, NULL);
+        }
         Logger::getInstance() << F << " ";
     }
 
     __mStop();
 
     Logger::getInstance().endl();
-    Logger::getInstance().append("IDA* stopped, ").timestamp();
+    Logger::getInstance().append(_algName).append(" stopped, ").timestamp();
     Logger::getInstance().append("-----------------------").endl();
     Logger::getInstance().append("Minimal steps count: ")
-    .append(_slnStepsCnt).endl();
+    .append(Solver::_slnStepsCnt).endl();
     Logger::getInstance().append("Made permutations  : ")
-    .append(_madeStepsCnt).endl();
+    .append(this->_madeStepsCnt).endl();
     Logger::getInstance().append("Found solutions    : ")
-    .append(_slnFoundCnt).endl();
+    .append(IDA_Star::_slnFoundCnt).endl();
     char buf[128];
     snprintf(buf, 128, "Solution time      : %.6f sec", __getSlnUsec()/1000000);
     Logger::getInstance().append(buf).endl();
-    return _slnStepsCnt;
+    return Solver::_slnStepsCnt;
 }

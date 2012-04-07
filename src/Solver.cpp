@@ -26,14 +26,50 @@
 #include <stdio.h>
 #include <sstream>
 
+// declaration of static variables (should be seen from all threads)
+int Solver::_slnStepsCnt = std::numeric_limits<int>::max();
+int Solver::_cpu_units = 0;
+std::map<int, std::string> Solver::_slnStates;
+std::vector<int> Solver::_slnShuffles;
+
 /**
  * Solver constructor
  *
  */
-Solver::Solver(Board &b)
+Solver::Solver(Board &b, int cpuUnits)
 {
     _board = b;
+    _madeStepsCnt = 0;
+    Solver::_cpu_units = cpuUnits;
     __init();
+}
+
+/**
+ * Solver copy constructor
+ *
+ */
+Solver::Solver(const Solver &solver)
+{
+    *this = solver;
+    _madeStepsCnt = 0;
+
+    // copy board
+    Board* b = new Board(solver._board);
+    _board = *b;
+
+    // copy bsIndex
+    _bsIndex = new int *[_board.getSize()];
+    for ( int x = 0; x < _board.getSize(); x++ )
+    {
+        _bsIndex[x] = new int[2];
+        _bsIndex[x][0] = solver._bsIndex[x][0];
+        _bsIndex[x][1] = solver._bsIndex[x][1];
+    }
+
+    // copy hIndex
+    _hIndex = new int[_board.getSize() + 1];
+    for ( int x = 0; x <= _board.getSize(); x++ )
+        _hIndex[x] = solver._hIndex[x];
 }
 
 /**
@@ -45,19 +81,19 @@ Solver::Solver(Board &b)
  */
 void Solver::dumpSolutionStates()
 {
-    if ( _slnStates.begin() != _slnStates.end() )
+    if ( Solver::_slnStates.begin() != Solver::_slnStates.end() )
     {
         char buf[8];
         Logger::getInstance().append("Solution states:").endl();
         std::map<int, std::string>::iterator it;
-        for ( int i = 1; i <= _slnStepsCnt; i++ )
+        for ( int i = 1; i <= Solver::_slnStepsCnt; i++ )
         {
-            it = _slnStates.find(i);
-            if ( it != _slnStates.end() )
+            it = Solver::_slnStates.find(i);
+            if ( it != Solver::_slnStates.end() )
             {
                 snprintf(buf, 8, "%3d: ", i);
                 Logger::getInstance().append(buf)
-                .append(_slnStates[i]).endl();
+                .append(Solver::_slnStates[i]).endl();
             }
         }
     }
@@ -73,16 +109,19 @@ void Solver::dumpSolutionStates()
 void Solver::dumpSolutionShuffles()
 {
     std::vector<int>::reverse_iterator sIt;
-    std::stringstream ss(std::stringstream::in | std::stringstream::out);
-    Logger::getInstance().append("Solution shuffles  :").endl();
-    for ( sIt = _slnShuffles.rbegin(); sIt < _slnShuffles.rend(); sIt++ )
+    if ( Solver::_slnShuffles.rbegin() != Solver::_slnShuffles.rend() )
     {
-        ss << (*sIt) << ", ";
+        std::stringstream ss(std::stringstream::in | std::stringstream::out);
+        Logger::getInstance().append("Solution shuffles  :").endl();
+        for ( sIt = Solver::_slnShuffles.rbegin(); sIt < Solver::_slnShuffles.rend(); sIt++ )
+        {
+            ss << (*sIt) << ",";
+        }
+        int pos = ss.tellp();
+        ss.seekp(pos - 1);
+        ss << std::endl;
+        Logger::getInstance() << ss.str();
     }
-    int pos = ss.tellp();
-    ss.seekp(pos - 2);
-    ss << std::endl;
-    Logger::getInstance() << ss.str();
 }
 
 /**

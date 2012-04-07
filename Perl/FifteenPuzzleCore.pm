@@ -22,11 +22,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Contains multithreaded and single-threaded versions
-
-########################################
 package FifteenPuzzleCore;
-########################################
+
 use strict;
 use warnings;
 use threads;
@@ -94,8 +91,8 @@ my $__swap = sub {
 #
 my $__create_bIndex = sub {
     $_bIndex = [];
-    for (my $x = 0; $x < @{$_board}; $x++ ) {
-        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+    for ( my $x = 0; $x < @{$_board}; $x++ ) {
+        for ( my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
             $_bIndex->[$_board->[$x][$y]] = [$x, $y];
         }
     }
@@ -110,10 +107,10 @@ my $__create_bIndex = sub {
 my $__create_bsIndex = sub {
     $_bsIndex = [];
     my $magick = 1;
-    for (my $x = 0; $x < @{$_board}; $x++ ) {
-        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+    for ( my $x = 0; $x < @{$_board}; $x++ ) {
+        for ( my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
             my $magickValue = $y + $magick;
-            if ($x == $#{$_board} && $y == $#{$_board->[$x]}) {
+            if ( $x == $#{$_board} && $y == $#{$_board->[$x]} ) {
                 $magickValue = 0;
             }
             $_bsIndex->[$magickValue] = [$x, $y];
@@ -132,7 +129,7 @@ my $__create_bsIndex = sub {
 my $__create_hIndex = sub {
     $_hIndex = [];
     my $h = 0;
-    for (my $i = 0; $i < @{$_bIndex}; $i++ ) {
+    for  (my $i = 0; $i < @{$_bIndex}; $i++ ) {
         my ($dx, $dy) = @{$_bIndex->[$i]};
         my ($x, $y) = @{$_bsIndex->[$i]};
         my $h_ = abs($dx - $x) + abs($dy - $y);
@@ -150,8 +147,8 @@ my $__create_hIndex = sub {
 #
 my $__create_nIndex = sub {
     $_nIndex = [];
-    for (my $x = 0; $x < @{$_board}; $x++ ) {
-        for (my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
+    for ( my $x = 0; $x < @{$_board}; $x++ ) {
+        for ( my $y = 0; $y < @{$_board->[$x]}; $y++ ) {
 
             # Horizontal left
             if ( (my $dy = $y - 1) >= 0 ) {
@@ -184,9 +181,9 @@ my $__create_nIndex = sub {
 my $__calcChecksum = sub {
     my ($boardArray, $cs) = ([], 0);
     map { map { push @$boardArray, $_ } @$_ } @$_board;
-    for (my $x = 0; $x < $#$boardArray; $x++) {
+    for ( my $x = 0; $x < $#$boardArray; $x++ ) {
         next unless $boardArray->[$x];
-        for (my $y = $x + 1; $y < @$boardArray; $y++) {
+        for ( my $y = $x + 1; $y < @$boardArray; $y++ ) {
             next unless $boardArray->[$y];
             $cs++ if $boardArray->[$y] < $boardArray->[$x];
         }
@@ -219,7 +216,7 @@ my $__fixBoard = sub {
     }
 
     unless ( $h & 1 ) {
-        unless ( $w & 1) {
+        unless ( $w & 1 ) {
 
             # For boards like 2x2, 4x4, ...
             # row index of zero numbered from 1
@@ -233,7 +230,7 @@ my $__fixBoard = sub {
     }
 
     # If parity odd then should fix
-    if( $cs & 1 ) {
+    if ( $cs & 1 ) {
         my $ac = \$_bIndex->[$size - 1];
         my $bc = \$_bIndex->[$size - 2];
         my ($ax, $ay) = @{$$ac};
@@ -302,7 +299,7 @@ sub board {
     if ( $b && ref $b eq 'ARRAY' ) {
         my $height = @$b;
         my $width = ref $b->[0] eq 'ARRAY' ? @{$b->[0]} : 0; 
-        unless ($width > 1 && $height > 1) {
+        unless ( $width > 1 && $height > 1 ) {
             print "Error, width and height must be greater than 1\n";
             return;
         }
@@ -312,7 +309,7 @@ sub board {
                 return;
             }
             my $w = @$_;
-            unless ($w == $width) {
+            unless ( $w == $width ) {
                 print "Error, bad board width\n";
                 return;
             }
@@ -343,7 +340,7 @@ sub createBoard {
     my ($width, $height) = @_;
     $width  ||= WIDTH;
     $height ||= HEIGHT;
-    unless ($width > 1 && $height > 1) {
+    unless ( $width > 1 && $height > 1 ) {
         print "Error, width and height must be greater than 1\n";
         return;
     }
@@ -403,6 +400,8 @@ sub multi_DFS {
     my $shuffleWith;
     my @nbrs = ();
     map { push @nbrs, $$_ } @{$_nIndex->[0]};
+    my $min = INFINITY;
+    my $stepsCnt = INFINITY;
     foreach my $nbr ( @nbrs ) {
         next if $nbr == $prev;
         my ($nx, $ny) = @{$_bIndex->[$nbr]};
@@ -422,7 +421,8 @@ sub multi_DFS {
         if ( $f > $F ) {
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
             ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
-            return $f;
+            $min = $f;
+            last;
         }
         unless ( $H ) {
             lock($_movesCount);
@@ -437,7 +437,7 @@ sub multi_DFS {
                 unshift @_shuffles, $nbr;
                 $reset = 1;
                 if ( $isBest ) {
-                    $$isBest = 1;
+                    $$isBest = $G;
                 }
             }
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
@@ -460,7 +460,6 @@ sub multi_DFS {
         ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
         ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
     }
-    my $min = INFINITY;
     foreach ( @$threads ) {
         push @$minimals, $_->join();
     }
@@ -472,8 +471,12 @@ sub multi_DFS {
         push @shfls, $_ if $_ != $prev;
     }
     for (my $i = 0; $i < @bestFlags; $i++) {
-        if ( ${$bestFlags[$i]} ) {
-            $shuffleWith = $shfls[$i];
+        if ( ${$bestFlags[$i]} < $stepsCnt ) {
+            lock($_movesCount);
+            if ( ${$bestFlags[$i]} == $_movesCount ) {
+                $stepsCnt = ${$bestFlags[$i]};
+                $shuffleWith = $shfls[$i];
+            }
         }
     }
     if ( !$min && $shuffleWith ) {
@@ -483,7 +486,7 @@ sub multi_DFS {
         unshift @_shuffles, $shuffleWith;
     }
     if ( $isBest && $shuffleWith ) {
-        $$isBest = 1;
+        $$isBest = $stepsCnt;
     }
     return $min;
 }
@@ -538,6 +541,7 @@ sub DFS {
         if ( $f > $F ) {
             ($_hIndex->[$$ba], $_hIndex->[$$bb], $_hIndex->[-1]) = ($ha, $hb, $hs);
             ($$bb, $$ba, $$bib, $$bia, $$nib, $$nia) = ($$ba, $bav, $$bia, $biav, $$nia, $niav);
+            last if $shuffleWith;
             return $f;
         }
         unless ( $H ) {
