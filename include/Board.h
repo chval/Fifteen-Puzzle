@@ -51,7 +51,7 @@ public:
     Board();
     Board(int width,
           int height);
-    Board(std::string json);
+    Board(const std::string json);
     Board(const Board &board);
     int getWidth();
     int getHeight();
@@ -59,7 +59,7 @@ public:
     int getValue(int x, int y);
     void getValueXY(int value, int &x, int &y);
     void swap(int a, int b);
-    int getNeigbours(int value, int *nbrs);
+    int getNeigbours(int value, int * const nbrs);
     void print();
     std::string toString();             // pack board into JSON array format
     bool isNotNull();                   // check if board was created

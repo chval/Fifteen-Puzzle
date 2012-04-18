@@ -51,7 +51,7 @@ ConsoleLogger::~ConsoleLogger()
  * Print message to STDOUT
  *
  */
-void ConsoleLogger::write(std::string message)
+void ConsoleLogger::write(const std::string message)
 {
     std::cout << message;
 }

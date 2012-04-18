@@ -66,7 +66,7 @@ void Logger::timestamp()
  * Custom overload of << operator for string
  *
  */
-Logger& Logger::operator << (std::string message)
+Logger& Logger::operator << (const std::string message)
 {
     this->write(message);
     return *this;
@@ -78,7 +78,7 @@ Logger& Logger::operator << (std::string message)
  * Just write string message
  *
  */
-Logger& Logger::append(std::string message)
+Logger& Logger::append(const std::string message)
 {
     this->write(message);
     return *this;
@@ -93,7 +93,7 @@ Logger& Logger::append(std::string message)
  * ex. "Error at Main::main"
  *
  */
-Logger& Logger::errorAt(std::string funcName)
+Logger& Logger::errorAt(const std::string funcName)
 {
     this->write(LOGGER_START_ERROR);
     this->write(funcName);
@@ -110,7 +110,7 @@ Logger& Logger::errorAt(std::string funcName)
  * Should be called after errorAt method, because of special formatting
  *
  */
-Logger& Logger::explain(std::string message)
+Logger& Logger::explain(const std::string message)
 {
     this->write(LOGGER_START_EXPLAIN);
     this->write(message);

@@ -230,6 +230,18 @@ inline void IDA_Star::__DFS_Multi(int F, int G, int prev, int *min, int *isBest)
             }
 
             *min = H;
+
+            if ( nbrWorkers )
+            {
+
+                // if some threads are running, sould be interrupted
+                nbrWorkers->join_all();
+                for ( int i = 0; i < realNbrsCnt; i++ )
+                {
+                    delete nbrSolvers[i];
+                }
+                delete nbrWorkers;
+            }
             return;
         }
 

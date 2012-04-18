@@ -311,3 +311,23 @@ inline double Solver::__getSlnUsec()
     return _solution_time;
 }
 
+/**
+ * Solver::__getSlnTime
+ *
+ * Get solution time as formatted string (hh:mm:ss)
+ *
+ */
+inline void Solver::__getSlnTime(char *buf)
+{
+    unsigned int hours, minutes, seconds;
+    unsigned int stime = _solution_time / 1000000;
+
+    hours = stime / 3600;
+    stime = stime % 3600;
+    minutes = stime / 60;
+    stime = stime % 60;
+    seconds = stime;
+
+    snprintf(buf, 9, "%02u:%02u:%02u", hours, minutes, seconds);
+}
+

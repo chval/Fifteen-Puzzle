@@ -33,39 +33,142 @@
 #define ID_4x4_59      "[[14,13,12,10],[6,2,8,5],[3,11,7,4],[15,9,0,1]]"
 #define ID_4x4_55      "[[12,6,5,11],[10,9,13,7],[2,1,3,15],[0,4,14,8]]"
 #define ID_4x4_55_2    "[[7,5,9,10],[6,2,1,14],[12,11,13,4],[3,8,0,15]]"
-#define ID_4x4_57      "[[8,2,13,15],[4,12,9,10],[3,11,7,0],[6,1,5,14]]"
+#define ID_4x4_60      "[[2,5,15,13],[4,0,6,11],[3,14,1,9],[7,12,10,8]]"
+#define ID_4x4_62      "[[15,9,0,8],[6,3,13,14],[7,1,11,5],[12,4,10,2]]"
 
 #include "IDA_Star.h"
+#include <boost/thread/thread.hpp>
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/parsers.hpp>
 #include <iostream>
 
 std::string head = "\
 *************************************\n\
-**   Fifteen puzzle project 2012   **\n\
+**       Copyright (c) 2012        **\n\
+** The Fifteen Puzzle solver v0.65 **\n\
 *************************************\n\
-Version 0.6\n\
-This is free software\n\n\
 ";
 
+// variables for command line parameters
+std::string custom_puzzle;
+int width;
+int height;
+bool multi;
+int cpu_units;
+bool json = false;
+bool needSolve = true;
+
+
+/**
+ * Run solver
+ *
+ */
 void run()
 {
-    Board *mBoard = new Board(4, 4);
-    Solver *mSolver = new IDA_Star(*mBoard, 2); // test multi-threaded version
-    std::cout << "=====> Randomly generated puzzle:" << std::endl << std::endl;
-    mBoard->print();
-    mSolver->solve();
-    mSolver->dumpSolutionShuffles();
-    Board *board = new Board(*mBoard);
-    delete mSolver;
-    std::cout << std::endl << std::endl;
-    Solver *solver = new IDA_Star(*board); // test singe threaded version
-    solver->solve();
-    solver->dumpSolutionShuffles();
-    delete solver;
+    Board *board;
+
+    if ( custom_puzzle.length() )
+    {
+        board = new Board(custom_puzzle);
+    }
+    else
+    {
+        board = new Board(width, height);
+    }
+
+    if ( board->isNotNull() )
+    {
+        if ( ! multi )
+        {
+            cpu_units = 1;
+        }
+
+        Solver *solver = new IDA_Star(*board, cpu_units);
+        std::cout << "=====> Set puzzle: ";
+
+        if ( json )
+        {
+            std::cout << "\"" << board->toString() << "\"";
+        }
+
+        std::cout << std::endl << std::endl;
+        board->print();
+
+        if ( ! needSolve )
+        {
+            delete solver;
+            return;
+        }
+
+        solver->solve();
+        solver->dumpSolutionShuffles();
+        delete solver;
+    }
 }
 
-int main()
+/**
+ * Print program info and help message to STDOUT
+ *
+ */
+void showHelp(boost::program_options::options_description desc)
 {
-    std::cout << head;
+    std::cout << head << std::endl;
+    std::cout << desc << std::endl;
+}
+
+/**
+ * Main function
+ *
+ * Collect program options and call run method
+ *
+ */
+int main(int argc, char *argv[])
+{
+    boost::program_options::options_description desc("Allowed options");
+    desc.add_options()
+    ("help", "show this help message")
+    ("no-solution,n", "just create and print random puzzle")
+    ("json,j", "print generated puzzle in JSON format")
+    ("width,w", boost::program_options::value<int>(&width)->default_value(4), "random puzzle width")
+    ("height,h", boost::program_options::value<int>(&height)->default_value(4), "random puzzle height")
+    ("set-puzzle,c", boost::program_options::value<std::string>(&custom_puzzle)->default_value(""), "set custom puzzle where arg is JSON array")
+    ("multi,m", boost::program_options::value<bool>(&multi)->default_value(true), "use multi-threaded version of algotithm")
+    ("cpu-units,u", boost::program_options::value<int>(&cpu_units)->default_value(boost::thread::hardware_concurrency()),
+     "used in multi-threaded algorithm\nSet it only if auto detected value is incorrect");
+
+    boost::program_options::variables_map vm;
+
+    try
+    {
+        boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
+        boost::program_options::notify(vm);
+    }
+    catch ( const boost::program_options::error& e )
+    {
+        showHelp(desc);
+        return 1;
+    }
+
+    if ( vm.count("help") )
+    {
+        showHelp(desc);
+        return 1;
+    }
+
+    if ( vm.count("no-solution") )
+    {
+        needSolve = false;
+    }
+
+    if ( vm.count("json") )
+    {
+        json = true;
+    }
+
+    std::cout << head << std::endl;
+
     run();
+
     return 0;
 }
