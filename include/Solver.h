@@ -27,7 +27,7 @@
 
 #include "Board.h"
 #include <sys/time.h>
-#include <boost/thread/mutex.hpp>
+#include <stdio.h>
 
 /**
  * Abstract Solver
@@ -76,6 +76,7 @@ protected:
     void __mStart();                               // method start (pinpoint the start time)
     void __mStop();                                // method stop (pinpoint the time of termination)
     double __getSlnUsec();                         // get solution time in milliseconds
+    void __getSlnTime(char *buf);                  // get solution time as formatted string
 };
 
 #include "Solver.hpp"

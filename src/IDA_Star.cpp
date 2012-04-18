@@ -118,6 +118,8 @@ int IDA_Star::solve()
     .append(IDA_Star::_slnFoundCnt).endl();
     char buf[128];
     snprintf(buf, 128, "Solution time      : %.6f sec", __getSlnUsec()/1000000);
-    Logger::getInstance().append(buf).endl();
+    Logger::getInstance().append(buf).append(" (");
+    __getSlnTime(buf);
+    Logger::getInstance().append(buf).append(")").endl();
     return Solver::_slnStepsCnt;
 }

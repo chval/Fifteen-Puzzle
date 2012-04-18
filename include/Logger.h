@@ -40,20 +40,20 @@ class Logger
 {
 public:
     static Logger& getInstance();
-    Logger& errorAt(std::string funcName);
-    Logger& explain(std::string message);
-    Logger& append(std::string s);
+    Logger& errorAt(const std::string funcName);
+    Logger& explain(const std::string message);
+    Logger& append(const std::string s);
     Logger& endl();
     void timestamp();
-    Logger& operator << (std::string message);
+    Logger& operator << (const std::string message);
 
-    template <typename T> Logger& operator << (T message);
-    template <typename T> Logger& explain(T message);
-    template <typename T> Logger& append(T message);
+    template <typename T> Logger& operator << (const T message);
+    template <typename T> Logger& explain(const T message);
+    template <typename T> Logger& append(const T message);
 private:
     static Logger *_loggerInstance;
 protected:
-    virtual void write(std::string message) = 0;
+    virtual void write(const std::string message) = 0;
 };
 
 /**
@@ -62,7 +62,7 @@ protected:
  * Overload of << operator for all types
  *
  */
-template <typename T> Logger& Logger::operator << (T message)
+template <typename T> Logger& Logger::operator << (const T message)
 {
     std::stringstream ss(std::stringstream::in | std::stringstream::out);
     ss << message;
@@ -79,7 +79,7 @@ template <typename T> Logger& Logger::operator << (T message)
  * Should be called after errorAt method, because of special formatting
  *
  */
-template <typename T> Logger& Logger::explain(T message)
+template <typename T> Logger& Logger::explain(const T message)
 {
     this->write(LOGGER_START_EXPLAIN);
     std::stringstream ss(std::stringstream::in | std::stringstream::out);
@@ -95,7 +95,7 @@ template <typename T> Logger& Logger::explain(T message)
  * Just write message
  *
  */
-template <typename T> Logger& Logger::append(T message)
+template <typename T> Logger& Logger::append(const T message)
 {
     std::stringstream ss(std::stringstream::in | std::stringstream::out);
     ss << message;

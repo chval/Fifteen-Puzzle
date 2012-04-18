@@ -71,7 +71,7 @@ Board::Board()
  * Create custom board from JSON array
  *
  */
-Board::Board(std::string json)
+Board::Board(const std::string json)
 {
     int width, height = 0;
     int **board = __parse(json, width, height);
@@ -228,7 +228,7 @@ void Board::swap(int a, int b)
  * Return count of neighbours
  *
  */
-int Board::getNeigbours(int value, int *nbrs)
+int Board::getNeigbours(int value, int * const nbrs)
 {
     int i;
     for ( i = 0; i < NEIGHBOURS_CNT_MAX && _nIndex[value][i]; i++)

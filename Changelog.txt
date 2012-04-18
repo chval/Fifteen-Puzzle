@@ -1,0 +1,13 @@
+********** C++ code v0.65 ***************************
+- Added program options;
+- Added solution time format (hh:mm:ss);
+- Fixed a bug when segmentation fault happened in multi-threaded algorithm because of unjoined threads.
+
+********** C++ code v0.6 ***************************
+- Added multi-threaded version of IDA* algorithm;
+- Fixed a bug in DFS algorithm, when solution was not saved in some cases;
+- Added some code optimizations;
+- Enhanced Cmake config (added release option).
+
+********** Perl script v1.4 ************************
+- Fixed a bug in DFS and Multi DFS algorithm, when solution was not saved in some cases.

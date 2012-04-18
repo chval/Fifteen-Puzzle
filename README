@@ -1,5 +1,5 @@
 *************************************
-**   Fifteen puzzle project 2012   **
+**   Fifteen puzzle solver 2012    **
 *************************************
 
 Currently only one algorithm IDA* is supported, but in future this list will be expanded
@@ -13,16 +13,7 @@ but if greater than calculations can take a lot of time. So this can be used as 
 Source code is available for c++ and perl under BSD license
 
 C++ version is ~50x faster than perl, but requires compilation.
-Perl version already contains multi-threaded algorithm that uses all processor cores for calculations
-
-********** C++ code v0.6 log ***************************
-- Added multi-threaded version of IDA* algorithm;
-- Fixed a bug in DFS algorithm, when solution was not saved in some cases;
-- Added some code optimizations;
-- Enhanced Cmake config (added release option).
-
-********** Perl script v1.4 log ************************
-- Fixed a bug in DFS and Multi DFS algorithm, when solution was not saved in some cases.
+Perl version is very slow, but was written first.
 
 *********** Install notes **************************
 
