@@ -317,7 +317,7 @@ inline int** Board::__parse(std::string json, int &width, int &height)
      */
     int lexErrors = 0;
     int size = boardWidth * boardHeight;
-    if ( size < 4 )
+    if ( size < 4 || boardWidth < 2 || boardHeight < 2 )
     {
         Logger::getInstance().errorAt("Board::__parse")
         .explain("minimal board dimension is 2x2").endl();
