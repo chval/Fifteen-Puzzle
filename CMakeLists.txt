@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (15puzzle)
 set(CMAKE_BUILD_TYPE Release)
 
-find_package( Boost 1.40.0 COMPONENTS thread program_options)
+find_package( Boost 1.50.0 COMPONENTS thread program_options system)
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
 	include_directories("${PROJECT_SOURCE_DIR}/include")
