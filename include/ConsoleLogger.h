@@ -30,8 +30,8 @@
 class ConsoleLogger : public Logger
 {
 public:
-    void write(const std::string message);
     ConsoleLogger();
+    void write(const std::string message);
     ~ConsoleLogger();
 };
 
