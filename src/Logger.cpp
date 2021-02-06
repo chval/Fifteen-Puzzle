@@ -39,7 +39,7 @@ Logger& Logger::getInstance()
 {
     if ( ! _loggerInstance )
     {
-        _loggerInstance = new ConsoleLogger;
+        _loggerInstance = new ConsoleLogger();
     }
     return *_loggerInstance;
 }
