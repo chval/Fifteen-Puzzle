@@ -135,15 +135,31 @@ class CustomPuzzle(Puzzle):
         if not (width > 1 and height > 1):
             raise ValueError('width and height must be greater than 1')
 
+        # init flat board with None
+        # to validate if all elements are present
+        board_flat = []
+        board_size = width * height
+
+        for i in range(board_size):
+            board_flat.append(None)
+
         for x in range(height):
             if not isinstance(board[x], list):
-                raise ValueError(f'board row {x} is not array')
+                raise ValueError("board row {} is not array".format(x))
             elif len(board[x]) != width:
-                raise ValueError(f'board row {x} has a different width')
+                raise ValueError("board row {} has a different width".format(x))
 
             for y in range(width):
-                if not isinstance(board[x][y], int):
-                    raise ValueError(f'board element {board[x][y]} at [{x}][{y}] is not integer')
+                i = board[x][y]
+                if not isinstance(i, int):
+                    raise ValueError("board element {} at [{}][{}] is not integer".format(i, x, y))
+
+                if i < board_size:
+                    board_flat[i] = True
+
+        for i in range(len(board_flat)):
+            if board_flat[i] is None:
+                raise ValueError("board element {} is missed".format(i))
 
         super().__init__(board)
 

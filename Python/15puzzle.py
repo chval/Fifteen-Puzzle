@@ -35,6 +35,19 @@ def main():
         parser.print_help()
         sys.exit(0)"""
 
+    try:
+        puzzle = _create_puzzle(args)
+    except ValueError as err_msg:
+        print("Error: {}".format(err_msg))
+        sys.exit(1)
+
+    puzzle.print_board()
+
+    if args.no_solution:
+        sys.exit(0)
+
+
+def _create_puzzle(args):
     if not args.custom_board:
         puzzle = FifteenPuzzleCore.RandomPuzzle(args.width, args.height)
         print("=====> Randomly generated puzzle:")
@@ -42,10 +55,7 @@ def main():
         puzzle = FifteenPuzzleCore.CustomPuzzle(args.custom_board)
         print("=====> Custom puzzle:")
 
-    puzzle.print_board()
-
-    if args.no_solution:
-        sys.exit(0)
+    return puzzle
 
 
 if __name__ == '__main__':
