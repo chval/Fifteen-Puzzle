@@ -231,8 +231,8 @@ my $__fixBoard = sub {
 
     # If parity odd then should fix
     if ( $cs & 1 ) {
-        my $ac = \$_bIndex->[$size - 1];
-        my $bc = \$_bIndex->[$size - 2];
+        my $ac = \$_bIndex->[$size];
+        my $bc = \$_bIndex->[$size - 1];
         my ($ax, $ay) = @{$$ac};
         my ($bx, $by) = @{$$bc};
         my $a = \$_board->[$ax][$ay];
