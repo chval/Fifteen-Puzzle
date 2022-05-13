@@ -296,6 +296,10 @@ sub printShuffles {
 #
 sub board {
     my $b = shift;
+
+    # reset current board
+    undef $_board;
+
     if ( $b && ref $b eq 'ARRAY' ) {
         my $height = @$b;
         my $width = ref $b->[0] eq 'ARRAY' ? @{$b->[0]} : 0; 
@@ -338,6 +342,10 @@ sub board {
 #
 sub createBoard {
     my ($width, $height) = @_;
+
+    # reset current board
+    undef $_board;
+
     $width  ||= WIDTH;
     $height ||= HEIGHT;
     unless ( $width > 1 && $height > 1 ) {
